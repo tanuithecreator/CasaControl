@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-26T17:24:40.147518400Z">
+        <DropdownSelection timestamp="2024-11-27T23:44:31.620719Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=RZ8T91JGPDM" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Alma\.android\avd\TJ_phoneZ.avd" />
             </handle>
           </Target>
         </DropdownSelection>

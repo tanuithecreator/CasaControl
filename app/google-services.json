@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1006632212626",
+    "project_id": "casacontrol-f6a78",
+    "storage_bucket": "casacontrol-f6a78.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1006632212626:android:90f4d1657a086c3feeae4b",
+        "android_client_info": {
+          "package_name": "com.example.casacontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNTeGQ7QfyXIssHDCNNKxAe2ZuHoLMyfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

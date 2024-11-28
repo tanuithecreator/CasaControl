@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">CasaControl</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="enable_notifications">Enable Notifications</string>
+    <string name="settings">Settings</string>
+
+
 </resources>
