@@ -34,5 +34,16 @@
         android:name="com.example.casacontrol.fragments.EditProfileFragment"
         android:label="Edit Profile" />
 
+    <fragment
+        android:id="@+id/roomDevicesFragment"
+        android:name="com.example.casacontrol.fragments.RoomDevicesFragment"
+        android:label="Room Devices"
+        tools:layout="@layout/fragment_room_devices">
+        <argument
+            android:name="room_name"
+            app:argType="string" />
+    </fragment>
+
+
 
 </navigation>

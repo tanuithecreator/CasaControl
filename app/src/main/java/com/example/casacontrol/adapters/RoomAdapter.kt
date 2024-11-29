@@ -3,34 +3,32 @@ package com.example.casacontrol.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.casacontrol.R
+import com.example.casacontrol.databinding.ItemRoomBinding
 import com.example.casacontrol.models.Room
 
 class RoomAdapter(
-    private val rooms: List<Room>, // Room list passed from the fragment
-    private val onRoomClick: (Room) -> Unit // Function to handle room selection
+    private val rooms: List<Room>,
+    private val onRoomClick: (Room) -> Unit
 ) : RecyclerView.Adapter<RoomAdapter.RoomViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RoomViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_room, parent, false) // Assuming you have an item layout for rooms
-        return RoomViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: RoomViewHolder, position: Int) {
-        val room = rooms[position]
-        holder.roomNameTextView.text = room.name
-        holder.itemView.setOnClickListener {
-            onRoomClick(room) // Trigger the click listener when a room is selected
+    inner class RoomViewHolder(private val binding: ItemRoomBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(room: Room) {
+            binding.roomNameTextView.text = room.name
+            binding.root.setOnClickListener { onRoomClick(room) }
         }
     }
 
-    override fun getItemCount(): Int = rooms.size
-
-    // ViewHolder for individual room item
-    inner class RoomViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val roomNameTextView: TextView = itemView.findViewById(R.id.roomNameTextView) // Ensure your layout has this ID
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RoomViewHolder {
+        val binding =
+            ItemRoomBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return RoomViewHolder(binding)
     }
+
+    override fun onBindViewHolder(holder: RoomViewHolder, position: Int) {
+        holder.bind(rooms[position])
+    }
+
+    override fun getItemCount() = rooms.size
 }

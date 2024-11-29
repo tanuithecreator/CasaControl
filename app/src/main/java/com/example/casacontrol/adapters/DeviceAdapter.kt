@@ -1,40 +1,35 @@
 package com.example.casacontrol.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.Switch
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.casacontrol.R
+import com.example.casacontrol.databinding.ItemDeviceBinding
 import com.example.casacontrol.models.Device
 
 class DeviceAdapter(
     private val devices: List<Device>,
-    private val onDeviceToggle: (Device) -> Unit
+    private val onToggle: (Device, Boolean) -> Unit
 ) : RecyclerView.Adapter<DeviceAdapter.DeviceViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_device, parent, false)
-        return DeviceViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
-        val device = devices[position]
-        holder.deviceNameTextView.text = device.name
-        holder.deviceStatusSwitch.isChecked = device.isOn
-
-        holder.deviceStatusSwitch.setOnCheckedChangeListener { _, isChecked ->
-            device.isOn = isChecked
-            onDeviceToggle(device)
+    inner class DeviceViewHolder(private val binding: ItemDeviceBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(device: Device) {
+            binding.deviceNameTextView.text = device.name
+            binding.deviceSwitch.isChecked = device.state
+            binding.deviceSwitch.setOnCheckedChangeListener { _, isChecked ->
+                onToggle(device, isChecked)
+            }
         }
     }
 
-    override fun getItemCount(): Int = devices.size
-
-    class DeviceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val deviceNameTextView: TextView = itemView.findViewById(R.id.deviceNameTextView)
-        val deviceStatusSwitch: Switch = itemView.findViewById(R.id.deviceStatusSwitch)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): DeviceViewHolder {
+        val binding = ItemDeviceBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return DeviceViewHolder(binding)
     }
+
+    override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
+        holder.bind(devices[position])
+    }
+
+    override fun getItemCount() = devices.size
 }

@@ -3,19 +3,17 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="16dp">
+    android:padding="8dp">
 
     <TextView
         android:id="@+id/deviceNameTextView"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="Device Name"
-        android:textSize="18sp" />
+        android:layout_weight="1"
+        android:textSize="16sp" />
 
     <Switch
-        android:id="@+id/deviceStatusSwitch"
+        android:id="@+id/deviceSwitch"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:text="On/Off" />
+        android:layout_height="wrap_content" />
 </LinearLayout>
