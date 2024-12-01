@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-27T23:44:31.620719Z">
+        <DropdownSelection timestamp="2024-11-30T19:15:10.593735Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Alma\.android\avd\TJ_phoneZ.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/elvismakara/.android/avd/Medium_Phone_Edited_API_VanillaIceCream.avd" />
             </handle>
           </Target>
         </DropdownSelection>

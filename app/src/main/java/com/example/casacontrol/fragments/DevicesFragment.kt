@@ -89,7 +89,7 @@ class DevicesFragment : Fragment() {
     private fun fetchDevicesForRoom(room: Room) {
         val db = FirebaseFirestore.getInstance()
         db.collection("devices")
-            .whereEqualTo("room", room.name)
+            .whereEqualTo("room", room.name) // Assuming "room" is a string in the Device model
             .get()
             .addOnSuccessListener { result ->
                 val deviceList = mutableListOf<Device>()
@@ -99,7 +99,7 @@ class DevicesFragment : Fragment() {
                 }
                 devices.clear()
                 devices.addAll(deviceList)
-                deviceAdapter.notifyDataSetChanged() // Refresh the device list
+                deviceAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(requireContext(), "Error fetching devices: ${exception.message}", Toast.LENGTH_SHORT).show()
@@ -108,10 +108,9 @@ class DevicesFragment : Fragment() {
 
     private fun toggleDevice(device: Device) {
         device.isOn = !device.isOn
-        // Update the device in Firestore
         val db = FirebaseFirestore.getInstance()
         db.collection("devices")
-            .document(device.id)
+            .document(device.id) // Use the device's ID to update the correct document
             .update("isOn", device.isOn)
             .addOnSuccessListener {
                 deviceAdapter.notifyDataSetChanged() // Refresh the device list
