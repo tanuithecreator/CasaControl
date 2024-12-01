@@ -4,17 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.Switch
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.casacontrol.R
 import com.example.casacontrol.adapters.DeviceAdapter
 import com.example.casacontrol.adapters.RoomAdapter
+import com.example.casacontrol.databinding.DialogAddRoomBinding
 import com.example.casacontrol.databinding.FragmentDevicesBinding
-import com.example.casacontrol.models.Device
 import com.example.casacontrol.models.Room
+import com.example.casacontrol.models.Device
 import com.google.firebase.firestore.FirebaseFirestore
 
 class DevicesFragment : Fragment() {
@@ -23,9 +23,12 @@ class DevicesFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val rooms = mutableListOf<Room>()
-    private val devices = mutableListOf<Device>()
     private lateinit var roomAdapter: RoomAdapter
+
+    private val devices = mutableListOf<Device>()
     private lateinit var deviceAdapter: DeviceAdapter
+
+    private val firestore = FirebaseFirestore.getInstance()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -38,47 +41,29 @@ class DevicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Set up Room RecyclerView
         roomAdapter = RoomAdapter(rooms) { room ->
-            // When a room is clicked, fetch devices for that room
-            fetchDevicesForRoom(room)
+            openRoomDevicesFragment(room.name)
         }
         binding.roomsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.roomsRecyclerView.adapter = roomAdapter
 
-        // Set up Device RecyclerView (initially empty)
-        deviceAdapter = DeviceAdapter(devices) { device ->
-            toggleDevice(device)
-        }
-        binding.devicesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.devicesRecyclerView.adapter = deviceAdapter
-
-        // Fetch rooms from Firestore
-        fetchRooms()
-
-        // Handle "Add Room" button click
         binding.addRoomButton.setOnClickListener {
             showAddRoomDialog()
         }
 
-        // Handle "Add Device" button click
-        binding.addDeviceButton.setOnClickListener {
-            showAddDeviceDialog()
+        fetchRooms()
+
+        deviceAdapter = DeviceAdapter(devices) { device, isOn->
+            toggleDevice(device, isOn)
         }
     }
 
     private fun fetchRooms() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("rooms")
+        firestore.collection("rooms")
             .get()
             .addOnSuccessListener { result ->
-                val roomList = mutableListOf<Room>()
-                for (document in result) {
-                    val room = document.toObject(Room::class.java)
-                    roomList.add(room)
-                }
                 rooms.clear()
-                rooms.addAll(roomList)
+                rooms.addAll(result.toObjects(Room::class.java))
                 roomAdapter.notifyDataSetChanged() // Refresh the room list
             }
             .addOnFailureListener { exception ->
@@ -87,18 +72,12 @@ class DevicesFragment : Fragment() {
     }
 
     private fun fetchDevicesForRoom(room: Room) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("devices")
-            .whereEqualTo("room", room.name) // Assuming "room" is a string in the Device model
+        firestore.collection("devices")
+            .whereEqualTo("room", room.name)
             .get()
             .addOnSuccessListener { result ->
-                val deviceList = mutableListOf<Device>()
-                for (document in result) {
-                    val device = document.toObject(Device::class.java)
-                    deviceList.add(device)
-                }
                 devices.clear()
-                devices.addAll(deviceList)
+                devices.addAll(result.toObjects(Device::class.java))
                 deviceAdapter.notifyDataSetChanged()
             }
             .addOnFailureListener { exception ->
@@ -106,29 +85,28 @@ class DevicesFragment : Fragment() {
             }
     }
 
-    private fun toggleDevice(device: Device) {
+    private fun toggleDevice(device: Device, isOn: Boolean) {
         device.isOn = !device.isOn
+        // Update the device in Firestore
         val db = FirebaseFirestore.getInstance()
         db.collection("devices")
-            .document(device.id) // Use the device's ID to update the correct document
+            .document(device.id)
             .update("isOn", device.isOn)
             .addOnSuccessListener {
                 deviceAdapter.notifyDataSetChanged() // Refresh the device list
             }
             .addOnFailureListener { exception ->
-                Toast.makeText(requireContext(), "Error updating device: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error fetching rooms: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun showAddRoomDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_room, null)
-        val roomNameEditText: EditText = dialogView.findViewById(R.id.roomNameEditText)
-
-        val dialog = android.app.AlertDialog.Builder(requireContext())
+        val dialogBinding = DialogAddRoomBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Add Room")
-            .setView(dialogView)
+            .setView(dialogBinding.root)
             .setPositiveButton("Add") { _, _ ->
-                val roomName = roomNameEditText.text.toString()
+                val roomName = dialogBinding.roomNameEditText.text.toString().trim()
                 if (roomName.isNotEmpty()) {
                     addRoomToFirestore(roomName)
                 } else {
@@ -141,57 +119,32 @@ class DevicesFragment : Fragment() {
     }
 
     private fun addRoomToFirestore(roomName: String) {
-        val db = FirebaseFirestore.getInstance()
-        val room = Room(name = roomName)
-        db.collection("rooms")
-            .add(room)
+        val roomData = hashMapOf("devices" to hashMapOf<String, Any>())
+        firestore.collection("rooms")
+            .document(roomName)
+            .set(roomData)
             .addOnSuccessListener {
                 Toast.makeText(requireContext(), "Room added successfully", Toast.LENGTH_SHORT).show()
-                fetchRooms() // Refresh room list
+                fetchRooms()
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(requireContext(), "Error adding room: ${exception.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun showAddDeviceDialog() {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_add_device, null)
-        val deviceNameEditText: EditText = dialogView.findViewById(R.id.deviceNameEditText)
-        val deviceStatusSwitch: Switch = dialogView.findViewById(R.id.deviceStatusSwitch)
-
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Add Device")
-            .setView(dialogView)
-            .setPositiveButton("Add") { _, _ ->
-                val deviceName = deviceNameEditText.text.toString()
-                val deviceStatus = deviceStatusSwitch.isChecked
-                if (deviceName.isNotEmpty()) {
-                    addDeviceToFirestore(deviceName, deviceStatus)
-                } else {
-                    Toast.makeText(requireContext(), "Device name cannot be empty", Toast.LENGTH_SHORT).show()
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .create()
-        dialog.show()
-    }
-
-    private fun addDeviceToFirestore(deviceName: String, deviceStatus: Boolean) {
-        val db = FirebaseFirestore.getInstance()
-        val device = Device(name = deviceName, isOn = deviceStatus, room = "Living Room") // Adjust room as needed
-        db.collection("devices")
-            .add(device)
-            .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Device added successfully", Toast.LENGTH_SHORT).show()
-                fetchDevicesForRoom(Room("Living Room")) // Fetch devices for room, adjust as necessary
-            }
-            .addOnFailureListener { exception ->
-                Toast.makeText(requireContext(), "Error adding device: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
+    private fun openRoomDevicesFragment(roomName: String) {
+        val fragment = RoomDevicesFragment()
+        fragment.arguments = Bundle().apply {
+            putString("room_name", roomName)
+        }
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.nav_host_fragment, fragment)
+            .addToBackStack(null)
+            .commit()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null // Prevent memory leaks
+        _binding = null
     }
 }

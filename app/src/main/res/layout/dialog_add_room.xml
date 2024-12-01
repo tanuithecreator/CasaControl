@@ -9,7 +9,6 @@
         android:id="@+id/roomNameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Room Name"
-        android:inputType="text" />
-
+        android:hint="Enter room name" />
 </LinearLayout>
+
