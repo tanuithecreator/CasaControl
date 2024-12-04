@@ -7,14 +7,13 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.casacontrol.R
-import com.example.casacontrol.adapters.DeviceAdapter
 import com.example.casacontrol.adapters.RoomAdapter
 import com.example.casacontrol.databinding.DialogAddRoomBinding
 import com.example.casacontrol.databinding.FragmentDevicesBinding
 import com.example.casacontrol.models.Room
-import com.example.casacontrol.models.Device
 import com.google.firebase.firestore.FirebaseFirestore
 
 class DevicesFragment : Fragment() {
@@ -24,9 +23,6 @@ class DevicesFragment : Fragment() {
 
     private val rooms = mutableListOf<Room>()
     private lateinit var roomAdapter: RoomAdapter
-
-    private val devices = mutableListOf<Device>()
-    private lateinit var deviceAdapter: DeviceAdapter
 
     private val firestore = FirebaseFirestore.getInstance()
 
@@ -41,21 +37,21 @@ class DevicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // Set up the RoomAdapter and RecyclerView
         roomAdapter = RoomAdapter(rooms) { room ->
+            // When a room is clicked, navigate to RoomDevicesFragment
             openRoomDevicesFragment(room.name)
         }
         binding.roomsRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         binding.roomsRecyclerView.adapter = roomAdapter
 
+        // Add Room Button click listener
         binding.addRoomButton.setOnClickListener {
             showAddRoomDialog()
         }
 
+        // Fetch rooms from Firestore
         fetchRooms()
-
-        deviceAdapter = DeviceAdapter(devices) { device, isOn->
-            toggleDevice(device, isOn)
-        }
     }
 
     private fun fetchRooms() {
@@ -65,35 +61,6 @@ class DevicesFragment : Fragment() {
                 rooms.clear()
                 rooms.addAll(result.toObjects(Room::class.java))
                 roomAdapter.notifyDataSetChanged() // Refresh the room list
-            }
-            .addOnFailureListener { exception ->
-                Toast.makeText(requireContext(), "Error fetching rooms: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun fetchDevicesForRoom(room: Room) {
-        firestore.collection("devices")
-            .whereEqualTo("room", room.name)
-            .get()
-            .addOnSuccessListener { result ->
-                devices.clear()
-                devices.addAll(result.toObjects(Device::class.java))
-                deviceAdapter.notifyDataSetChanged()
-            }
-            .addOnFailureListener { exception ->
-                Toast.makeText(requireContext(), "Error fetching devices: ${exception.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun toggleDevice(device: Device, isOn: Boolean) {
-        device.isOn = !device.isOn
-        // Update the device in Firestore
-        val db = FirebaseFirestore.getInstance()
-        db.collection("devices")
-            .document(device.id)
-            .update("isOn", device.isOn)
-            .addOnSuccessListener {
-                deviceAdapter.notifyDataSetChanged() // Refresh the device list
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(requireContext(), "Error fetching rooms: ${exception.message}", Toast.LENGTH_SHORT).show()
@@ -132,15 +99,15 @@ class DevicesFragment : Fragment() {
             }
     }
 
+    // In DevicesFragment, navigate to RoomDevicesFragment with room name
     private fun openRoomDevicesFragment(roomName: String) {
-        val fragment = RoomDevicesFragment()
-        fragment.arguments = Bundle().apply {
-            putString("room_name", roomName)
+        // Create a Bundle to pass the room_name argument
+        val bundle = Bundle().apply {
+            putString("room_name", roomName) // Add the room name as a string
         }
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.nav_host_fragment, fragment)
-            .addToBackStack(null)
-            .commit()
+
+        // Use NavController to navigate, passing the Bundle
+        findNavController().navigate(R.id.roomDevicesFragment, bundle)
     }
 
     override fun onDestroyView() {

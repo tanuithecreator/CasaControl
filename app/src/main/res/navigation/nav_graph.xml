@@ -43,7 +43,4 @@
             android:name="room_name"
             app:argType="string" />
     </fragment>
-
-
-
 </navigation>

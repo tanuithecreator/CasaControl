@@ -22,11 +22,11 @@ class DeviceAdapter(
 
     override fun onBindViewHolder(holder: DeviceViewHolder, position: Int) {
         val device = devices[position]
-        holder.deviceNameTextView.text = device.name
+        holder.deviceNameTextView.text = device.deviceName
         holder.deviceStatusSwitch.isChecked = device.isOn
 
         holder.deviceStatusSwitch.setOnCheckedChangeListener { _, isChecked ->
-            onDeviceToggle(device, isChecked)
+            onDeviceToggle(device, isChecked) // Update device status when toggled
         }
     }
 

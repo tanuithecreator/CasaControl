@@ -1,15 +1,19 @@
 package com.example.casacontrol.fragments
 
+import android.app.AlertDialog
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.casacontrol.adapters.DeviceAdapter
+import com.example.casacontrol.databinding.DialogAddDeviceBinding
 import com.example.casacontrol.databinding.FragmentRoomDevicesBinding
 import com.example.casacontrol.models.Device
+import com.example.casacontrol.models.Room
 import com.google.firebase.firestore.FirebaseFirestore
 
 class RoomDevicesFragment : Fragment() {
@@ -17,11 +21,8 @@ class RoomDevicesFragment : Fragment() {
     private var _binding: FragmentRoomDevicesBinding? = null
     private val binding get() = _binding!!
 
-    private val devices = mutableListOf<Device>()
-    private lateinit var deviceAdapter: DeviceAdapter
-
     private val firestore = FirebaseFirestore.getInstance()
-    private var roomName: String? = null
+    private var roomName: String? = null  // To store the room name passed from DevicesFragment
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,59 +35,70 @@ class RoomDevicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Get arguments passed from NavController
+        // Get the room name from arguments passed from DevicesFragment
         roomName = arguments?.getString("room_name")
-        Log.d("RoomDevicesFragment", "Room Name: $roomName")
 
-        // Setup RecyclerView
-        deviceAdapter = DeviceAdapter(devices) { device, isChecked ->
-            toggleDeviceState(device, isChecked)
+        // Set up the Add Device button click listener
+        binding.addDeviceButton.setOnClickListener {
+            showAddDeviceDialog()
         }
 
-        binding.devicesRecyclerView.layoutManager = LinearLayoutManager(requireContext())
-        binding.devicesRecyclerView.adapter = deviceAdapter
-
-        // Fetch devices from Firestore
-        fetchDevices()
+        // Here, you would fetch devices for this specific room from Firestore, based on roomName
+        fetchDevicesForRoom()
     }
 
-    private fun fetchDevices() {
+    // Method to fetch devices related to this room
+    private fun fetchDevicesForRoom() {
         roomName?.let { room ->
             firestore.collection("rooms")
                 .document(room)
                 .collection("devices")
                 .get()
                 .addOnSuccessListener { result ->
-                    devices.clear()
-                    for (document in result) {
-                        val id = document.id // Get the document ID from Firestore
-                        val name = document.getString("name") ?: "Unknown"
-                        val isOn = document.getBoolean("isOn") ?: false // Use 'isOn' instead of 'state'
-
-                        // Add the device with the correct parameters
-                        devices.add(Device(id = id, name = name, isOn = isOn))
-                    }
-                    deviceAdapter.notifyDataSetChanged()
+                    // Handle the result and update the RecyclerView with the devices for this room
+                    // Example: Update RecyclerView adapter
                 }
-                .addOnFailureListener { e ->
-                    Log.e("RoomDevicesFragment", "Error fetching devices: ${e.message}")
+                .addOnFailureListener { exception ->
+                    Toast.makeText(requireContext(), "Error fetching devices: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
         }
     }
 
-    private fun toggleDeviceState(device: Device, newState: Boolean) {
+    // Method to show the dialog for adding a device
+    private fun showAddDeviceDialog() {
+        val dialogBinding = DialogAddDeviceBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("Add Device")
+            .setView(dialogBinding.root)
+            .setPositiveButton("Add") { _, _ ->
+                val deviceName = dialogBinding.deviceNameEditText.text.toString().trim()
+                if (deviceName.isNotEmpty()) {
+                    addDeviceToFirestore(deviceName)
+                } else {
+                    Toast.makeText(requireContext(), "Device name cannot be empty", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+        dialog.show()
+    }
+
+    // Method to add a device to Firestore under the selected room
+    private fun addDeviceToFirestore(deviceName: String) {
         roomName?.let { room ->
+            val deviceData = hashMapOf("name" to deviceName)
+
             firestore.collection("rooms")
                 .document(room)
                 .collection("devices")
-                .document(device.id)
-                .update("isOn", newState)  // Update the "isOn" field
+                .document(deviceName)
+                .set(deviceData)
                 .addOnSuccessListener {
-                    device.isOn = newState  // Update local device state
-                    deviceAdapter.notifyDataSetChanged()
+                    Toast.makeText(requireContext(), "Device added successfully", Toast.LENGTH_SHORT).show()
+                    fetchDevicesForRoom()  // Refresh device list
                 }
-                .addOnFailureListener { e ->
-                    Log.e("RoomDevicesFragment", "Error toggling device: ${e.message}")
+                .addOnFailureListener { exception ->
+                    Toast.makeText(requireContext(), "Error adding device: ${exception.message}", Toast.LENGTH_SHORT).show()
                 }
         }
     }

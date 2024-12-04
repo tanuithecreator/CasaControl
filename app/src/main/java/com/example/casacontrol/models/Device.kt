@@ -1,7 +1,8 @@
 package com.example.casacontrol.models
 
 data class Device(
-    val id: String,
-    val name: String,
+    var id: String,
+    val deviceName: String,
+    val deviceType: String,
     var isOn: Boolean
 )

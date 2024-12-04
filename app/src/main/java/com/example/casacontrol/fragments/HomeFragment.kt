@@ -28,13 +28,14 @@ class HomeFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(context)
 
         // Add sample devices to the list
-        deviceList.add(Device("Device 1", true.toString()))
-        deviceList.add(Device("Device 2", false.toString()))
-        deviceList.add(Device("Device 3", true.toString()))
+        deviceList.add(Device("1", "Light", "Bulb", true))  // Pass true as Boolean, not a String
+        deviceList.add(Device("2", "Fan", "Electric Fan",false)) // Pass false as Boolean, not a String
+        deviceList.add(Device("3", "Printer", "Printer", true))  // Pass true as Boolean, not a String
 
         // Set up the adapter with a callback for toggling device state
-        deviceAdapter = DeviceAdapter(deviceList) { device ->
+        deviceAdapter = DeviceAdapter(deviceList) { device, isChecked ->
             // Handle the toggle action (e.g., updating device state)
+            device.isOn = isChecked
             // You can update the device's state in your data model or API here
         }
 
